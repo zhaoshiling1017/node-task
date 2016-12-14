@@ -29,6 +29,7 @@ http.listen(config.port, function() {
 
 app.get("/volunteer/downVolunteerInfo", function(req, res) {
   var q = req.query;
+  var taskId = q.taskId;
   var fileName="志愿者详情表.xlsx";
   query.toVolunteerQuery(conn, q, function(err, sql) {
     if (err) {
@@ -40,15 +41,31 @@ app.get("/volunteer/downVolunteerInfo", function(req, res) {
     var filePathName = basePath + "/" + sign + "_volunteer_info_list.xlsx";
     var cmd = "lua ./lua/export.lua '"+filePathName+"' '"+JSON.stringify(titles)+"' '"+sql+"'";
     exec(cmd, function(err, stdout, stderr) {
+      var rcode = -1;
+      var reason = "";
+      var status = "";
+      var filePath = "";
       if (err) {
+        reason = "任务执行出现异常";
+        status = "ERROR";
         logger.error("[%s]: message<%s>", "server", err.toString());
-        return res.send({"rcode": -1, "reason": "任务执行出现异常", "filePath": '', "fileName": fileName});
       }
       if (stdout) {
         var result = JSON.parse(stdout);
-        logger.info("[%s]: rcode<%s>, reason<%s>, filePathName<%s>", "server", result.rcode, result.reason, filePathName);
-        res.send({"rcode": 0, "reason": "", "filePath": filePathName, "fileName": fileName});
+        rcode = result.rcode;
+        reason = result.reason;
+        filePath = filePathName;
+        status = "COMPLETE";
+        logger.info("[%s]: rcode<%s>, reason<%s>, filePath<%s>", "server", rcode, reason, filePath);
       }
+      var sql = "UPDATE T_TASK SET status = ?, updated_at = ?, file_path = ?, file_name = ?, note = ? WHERE id = ?";
+      var args = [status, new Date(), filePath, fileName, reason, taskId];
+      conn.query(sql, args, function(err, result) {
+        if (err) {
+          logger.error("[%s]: message<%s>", "server", err.toString());
+        }
+      });
     });
+    res.end();
   });
 });

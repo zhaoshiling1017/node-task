@@ -9,13 +9,14 @@ local config = cjson.decode(data)
 
 local redisCli = redis.connect(config.dic.host, config.dic.port)
 
+--创建环境对象
+local env = assert(luasql.mysql())
+--连接数据库
+local conn_local_db = assert(env:connect(config.db.database, config.db.user, config.db.password, config.db.host, config.db.port))
+--操作数据库
+conn_local_db:execute("SET NAMES utf8")
+
 function queryVolunteerInfos(sql_statement)
-  --创建环境对象
-  local env = assert(luasql.mysql())
-  --连接数据库
-  local conn_local_db = assert(env:connect(config.db.database, config.db.user, config.db.password, config.db.host, config.db.port))
-  --操作数据库
-  conn_local_db:execute("SET NAMES utf8")
   --conn_local_db:execute("START TRANSACTION;")
   local cursor = assert(conn_local_db:execute(sql_statement))
   local row = cursor:fetch ({}, "n")
@@ -45,10 +46,6 @@ function queryVolunteerInfos(sql_statement)
     row = cursor:fetch (row, "n")
   end
   --conn_local_db:execute("COMMIT;")
-  --关闭数据库连接
-  conn_local_db:close()
-  --关闭数据库环境
-  env:close()
   return result
 end
 
@@ -68,11 +65,18 @@ function createWorkBook(fileName, titles, contents)
  workbook:close()
 end
 
-local fileName = arg[1]
+local filePathName = arg[1]
 local titles = cjson.decode(arg[2])
 local sql = arg[3]
+local fileName = arg[4]
+local taskId = arg[5]
 local contents = queryVolunteerInfos(sql)
-createWorkBook(fileName, titles, contents)
+createWorkBook(filePathName, titles, contents)
+
+--关闭数据库连接
+conn_local_db:close()
+--关闭数据库环境
+env:close()
 
 local result = {rcode=0, reason=""}
 print(cjson.encode(result))
