@@ -1,0 +1,29 @@
+{
+    "port": 4002,
+    "dic": {
+        "host": "127.0.0.1",
+        "port": 6379
+    },
+    "db": {
+      "host": "127.0.0.1",
+      "port": "3306",
+      "user": "root",
+      "password": "",
+      "database": "subwaydb"
+    },
+    "download_filePath": "/apps/download",
+     "tasks": [
+    {
+        "target": "EXPORT_TASKS_QUEUE",
+        "queue": "DIC_INDEX.TASKS_QUEUE",
+        "toQueue": "DIC_INDEX.DOWNLOAD_QUEUE",
+        "cron": "* * * * * *"
+    },
+    {
+        "target": "EXPORT_DOWNLOAD_QUEUE",
+        "queue": "DIC_INDEX.DOWNLOAD_QUEUE",
+        "baseUrl": "http://127.0.0.1:4002",
+        "cron": "* * * * * *"
+    }
+    ]
+}
