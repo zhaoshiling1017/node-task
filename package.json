@@ -1,6 +1,6 @@
 {
-  "name": "agent_event_server",
-  "description": "agent event server",
+  "name": "node-task",
+  "description": "deal with export import task",
   "version": "0.0.1",
   "private": true,
   "main": "server.js",
