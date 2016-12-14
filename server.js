@@ -33,7 +33,12 @@ app.get("/volunteer/downVolunteerInfo", function(req, res) {
   var fileName="志愿者详情表.xlsx";
   query.toVolunteerQuery(conn, q, function(err, sql) {
     if (err) {
-      return res.send({"rcode": -1, "reason": "任务执行出现异常", "filePath": '', "fileName": fileName});
+      conn.query("UPDATE T_TASK SET status = ?, updated_at = ?, file_path = ?, file_name = ?, note = ? WHERE id = ?", ["ERROR", new Date(), "", fileName, "任务执行出现异常", taskId], function(e) {
+        if (e) {
+          logger.error("[%s]: message<%s>", "server", e.toString());
+        }
+      });
+      return res.end();
     }
     var titles = ["志愿者姓名", "志愿者编号", "联系方式", "身份证号", "总队", "支队", "中队", "总积分", "性别", "注册来源", "注册日期", "修改日期", "用户名", "人员类型", "乘车路线", "乘车车站", "审核状态", "活跃度"];
     var sign = moment(new Date()).format('YYYYMMDDHHmmss');
