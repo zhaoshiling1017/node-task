@@ -68,8 +68,6 @@ end
 local filePathName = arg[1]
 local titles = cjson.decode(arg[2])
 local sql = arg[3]
-local fileName = arg[4]
-local taskId = arg[5]
 local contents = queryVolunteerInfos(sql)
 createWorkBook(filePathName, titles, contents)
 
