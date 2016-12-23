@@ -8,16 +8,25 @@ var config = require('./config/config.json'),
     mysql = require('mysql'),
     exec = require('child_process').exec,
     query = require('./lib/query'),
+    os = require('os'),
     moment = require('moment');
 
 var dic = config.dic;
 var db = config.db;
+var sysCoreNum = os.cpus().length;
+
 var client = redis.createClient(dic.port, dic.host);
 var conn = mysql.createConnection({
   host : db.host,
   user : db.user,
   password : db.password,
   database : db.database
+});
+
+client.set('DIC_SYSTEM_CORE_NUM', sysCoreNum, function(err) {
+  if (err) {
+    logger.error("[%s]: message<%s>", "server", err.toString());
+  }
 });
 
 Job.run(client, conn, config.tasks);
@@ -66,6 +75,11 @@ app.get("/volunteer/downVolunteerInfo", function(req, res) {
       var sql = "UPDATE T_TASK SET status = ?, updated_at = ?, file_path = ?, file_name = ?, note = ? WHERE id = ?";
       var args = [status, new Date(), filePath, fileName, reason, taskId];
       conn.query(sql, args, function(err, result) {
+        if (err) {
+          logger.error("[%s]: message<%s>", "server", err.toString());
+        }
+      });
+      client.incr('DIC_SYSTEM_CORE_NUM', function(err) {
         if (err) {
           logger.error("[%s]: message<%s>", "server", err.toString());
         }
